@@ -1,5 +1,7 @@
 # lala-parser
-testing ground for the parser for my language, Lala.
+Testing ground for the parser for my language, Lala. 
+
+Lala uses a parsing expression grammar (PEG) and uses [pest](https://pest.rs/), a Rust library, for generating the parser.
 
 Lala is a simple scripting language to quickly solve linear algebra problems. 
 
