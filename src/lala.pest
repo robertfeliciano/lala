@@ -1,0 +1,62 @@
+program = _{ SOI ~ "\n"* ~ (stmt ~ "\n"+)* ~ stmt? ~ EOI }
+
+stmt = _{ expr }
+
+expr = {
+    assn
+  | monadic
+  | dyadic
+  | ident
+  | matrix
+  | terms
+}
+
+monadic = { verb ~ expr }
+
+dyadic = { (monadic | terms | ident) ~ verb ~ expr }
+
+assn = { "let" ~ ident ~ "=" ~ expr }
+
+matrix = {
+    (terms+ ~ ";")+ ~ terms ~ ";"?
+}
+
+terms = { term+ }
+
+term = _{
+    decimal
+  | integer
+  | "(" ~ expr ~ ")"
+}
+
+verb = {
+    "#" // rank
+
+  | "?" // inverse
+
+  | ">>" // rref
+
+  | ">+" // transpose
+
+  | "@" // dot prod
+
+  | "++" // matrix addition
+
+  | "**" // elem wise multiplication
+
+  | "!" // scalar multiplication
+  // more to come later
+}
+
+integer = @{ "_"? ~ ASCII_DIGIT+ }
+
+decimal = @{
+    ("_"? ~ ASCII_DIGIT+ ~ "." ~ ASCII_DIGIT*)
+  | ("-"? ~ ASCII_DIGIT ~ "e" ~ "-"? ~ ASCII_DIGIT)
+}
+
+ident = @{ ASCII_ALPHA ~ (ASCII_ALPHANUMERIC | "_")* }
+
+WHITESPACE = _{ " " | "\t" }
+
+COMMENT = _{ "//" | "/" ~ "*"+ ~ "\n"? ~ ANY* ~ "\n"? ~ "*"+ ~ "/" }
