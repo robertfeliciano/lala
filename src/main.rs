@@ -23,27 +23,7 @@ pub enum DyadicVerb {
     Times,
 }
 
-#[derive(PartialEq, Debug, Clone)]
-pub enum AstNode {
-    Integer(i32),
-    DoublePrecisionFloat(f64),
-    MonadicOp {
-        verb: MonadicVerb,
-        expr: Box<AstNode>,
-    },
-    DyadicOp {
-        verb: DyadicVerb,
-        lhs: Box<AstNode>,
-        rhs: Box<AstNode>,
-    },
-    Terms(Vec<AstNode>),
-    Assignment {
-        ident: String,
-        expr: Box<AstNode>,
-    },
-    Ident(String),
-    Matrix(Vec<Vec<AstNode>>),
-}
+
 
 fn build_ast_from_term(pair: pest::iterators::Pair<Rule>) -> AstNode {
     match pair.as_rule() {
@@ -99,6 +79,28 @@ fn parse_dyadic_verb(pair: pest::iterators::Pair<Rule>, lhs: AstNode, rhs: AstNo
             _ => panic!("Dyadic {} not supported (yet?)", pair.as_str()),
         },
     })
+}
+
+#[derive(PartialEq, Debug, Clone)]
+pub enum AstNode {
+    Integer(i32),
+    DoublePrecisionFloat(f64),
+    MonadicOp {
+        verb: MonadicVerb,
+        expr: Box<AstNode>,
+    },
+    DyadicOp {
+        verb: DyadicVerb,
+        lhs: Box<AstNode>,
+        rhs: Box<AstNode>,
+    },
+    Terms(Vec<AstNode>),
+    Assignment {
+        ident: String,
+        expr: Box<AstNode>,
+    },
+    Ident(String),
+    Matrix(Vec<Vec<AstNode>>),
 }
 
 fn build_ast_from_expr(pair: pest::iterators::Pair<Rule>) -> Option<AstNode> {
