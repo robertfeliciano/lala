@@ -7,7 +7,6 @@ use pest_derive::Parser;
 #[grammar = "lala.pest"]
 pub struct LalaParser;
 
-
 #[derive(PartialEq, Eq, Debug, Clone)]
 pub enum MonadicVerb {
     Rank,
@@ -55,7 +54,7 @@ fn build_ast_from_term(pair: pest::iterators::Pair<Rule>) -> AstNode {
             };
             let int: i32 = istr.parse().unwrap();
             AstNode::Integer(sign * int)
-        },
+        }
         Rule::decimal => {
             let dstr = pair.as_str();
             let (sign, dstr) = match &dstr[..1] {
@@ -67,10 +66,8 @@ fn build_ast_from_term(pair: pest::iterators::Pair<Rule>) -> AstNode {
                 float *= sign;
             }
             AstNode::DoublePrecisionFloat(float)
-        },
-        Rule::expr => {
-            build_ast_from_expr(pair).unwrap()
-        },
+        }
+        Rule::expr => build_ast_from_expr(pair).unwrap(),
         bad_term => panic!("Unexpected term: {:?}", bad_term),
     }
 }
@@ -88,7 +85,11 @@ fn parse_monadic_verb(pair: pest::iterators::Pair<Rule>, expr: AstNode) -> Optio
     })
 }
 
-fn parse_dyadic_verb(pair: pest::iterators::Pair<Rule>, lhs: AstNode, rhs: AstNode) -> Option<AstNode> {
+fn parse_dyadic_verb(
+    pair: pest::iterators::Pair<Rule>,
+    lhs: AstNode,
+    rhs: AstNode,
+) -> Option<AstNode> {
     Some(AstNode::DyadicOp {
         lhs: Box::new(lhs),
         rhs: Box::new(rhs),
@@ -109,37 +110,37 @@ fn build_ast_from_expr(pair: pest::iterators::Pair<Rule>) -> Option<AstNode> {
             let verb = pair.next()?;
             let op = build_ast_from_expr(pair.next()?)?;
             parse_monadic_verb(verb, op)
-        },
+        }
         Rule::dyadic => {
             let mut pair = pair.into_inner();
             let lhs = build_ast_from_expr(pair.next()?)?;
             let op = pair.next()?;
             let rhs = build_ast_from_expr(pair.next()?)?;
             parse_dyadic_verb(op, lhs, rhs)
-        },
+        }
         Rule::assn => {
             let mut pair = pair.into_inner();
             let ident = pair.next()?;
             let expr = build_ast_from_expr(pair.next()?)?;
             Some(AstNode::Assignment {
                 ident: String::from(ident.as_str()),
-                expr: Box::new(expr)
+                expr: Box::new(expr),
             })
-        },
+        }
         Rule::ident => {
             let i = pair.as_str();
             Some(AstNode::Ident(i.to_string()))
-        },
+        }
         Rule::terms => {
             let terms: Vec<AstNode> = pair.into_inner().map(build_ast_from_term).collect();
             Some(match terms.len() {
                 1 => terms.get(0).unwrap().clone(),
                 _ => Terms(terms),
             })
-        },
+        }
         Rule::matrix => {
             let mut mat: Vec<Vec<AstNode>> = Vec::new();
-            for row in pair.into_inner(){
+            for row in pair.into_inner() {
                 let terms: Vec<AstNode> = row.into_inner().map(build_ast_from_term).collect();
                 mat.push(terms);
             }

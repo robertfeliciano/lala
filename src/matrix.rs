@@ -175,7 +175,8 @@ impl Matrix {
             panic!("Matrices must be of the same size.");
         }
         let mut new_matrix = Self::new(self.rows, self.cols);
-        new_matrix.data = self.data
+        new_matrix.data = self
+            .data
             .iter()
             .zip(b.data.iter())
             .map(|(a, b)| f(*a, *b))
@@ -219,7 +220,7 @@ impl Matrix {
         }
     }
 }
-    
+
 impl Index<usize> for Matrix {
     type Output = [f64];
 
