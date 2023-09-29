@@ -80,8 +80,8 @@ fn parse_monadic_verb(pair: pest::iterators::Pair<Rule>, expr: AstNode) -> Optio
         verb: match pair.as_str() {
             "#" => MonadicVerb::Rank,
             "?" => MonadicVerb::Inverse,
-            ">>" => MonadicVerb::RREF,
-            ">+" => MonadicVerb::Transpose,
+            "$" => MonadicVerb::RREF,
+            "%" => MonadicVerb::Transpose,
             _ => panic!("Monadic {} not supported (yet?)", pair.as_str()),
         },
         expr: Box::new(expr),

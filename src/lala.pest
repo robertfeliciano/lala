@@ -34,9 +34,9 @@ verb = {
 
   | "?" // inverse
 
-  | ">>" // rref
+  | "$" // rref
 
-  | ">+" // transpose
+  | "%" // transpose
 
   | "@" // dot prod
 
