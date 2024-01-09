@@ -38,6 +38,8 @@ verb = {
 
   | "%" // transpose
 
+  | "det" // determinant
+
   | "@" // dot prod
 
   | "++" // matrix addition

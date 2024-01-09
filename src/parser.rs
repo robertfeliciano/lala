@@ -13,6 +13,7 @@ pub enum MonadicVerb {
     Inverse,
     RREF,
     Transpose,
+    Determinant
 }
 
 #[derive(PartialEq, Eq, Debug, Clone)]
@@ -79,6 +80,7 @@ fn parse_monadic_verb(pair: pest::iterators::Pair<Rule>, expr: AstNode) -> Optio
             "?" => MonadicVerb::Inverse,
             "$" => MonadicVerb::RREF,
             "%" => MonadicVerb::Transpose,
+            "det" => MonadicVerb::Determinant,
             _ => panic!("Monadic {} not supported (yet?)", pair.as_str()),
         },
         expr: Box::new(expr),
