@@ -1,10 +1,7 @@
 use anyhow::anyhow;
 use lala::parser::*;
 use lala::types::*;
-use std::{
-    collections::HashMap,
-    ops::{Deref},
-};
+use std::{collections::HashMap, ops::Deref};
 
 #[inline]
 fn get_value<'a>(map: &'a HashMap<String, LalaType>, key: &'a String) -> LalaType {
@@ -15,11 +12,7 @@ fn get_value<'a>(map: &'a HashMap<String, LalaType>, key: &'a String) -> LalaTyp
 }
 
 #[inline]
-fn eval_expr(
-    env: &mut HashMap<String, LalaType>, 
-    expr: &Box<AstNode>,
-    func: &str
-) -> LalaType {
+fn eval_expr(env: &mut HashMap<String, LalaType>, expr: &Box<AstNode>, func: &str) -> LalaType {
     match expr.deref() {
         AstNode::Ident(id) => get_value(env, id),
         AstNode::MonadicOp { verb, expr } => eval_monadic_op(expr, env, verb),
@@ -44,13 +37,18 @@ fn eval_monadic_op(
             LalaType::Matrix(matrix.inverse())
         }
         MonadicVerb::Rank => {
-            todo!()
+            let m = eval_expr(env, expr, "rank");
+            let matrix = match m {
+                LalaType::Matrix(mat) => mat,
+                _ => panic!("Can only call rank on a matrix."),
+            };
+            LalaType::Integer(matrix.rank())
         }
         MonadicVerb::RREF => {
             let m = eval_expr(env, expr, "rref");
             let matrix = match m {
                 LalaType::Matrix(mat) => mat,
-                _ => panic!("Can only call inverse on a matrix."),
+                _ => panic!("Can only call rref on a matrix."),
             };
             LalaType::Matrix(matrix.rref())
         }
@@ -58,7 +56,7 @@ fn eval_monadic_op(
             let m = eval_expr(env, expr, "transpose");
             let matrix = match m {
                 LalaType::Matrix(mat) => mat,
-                _ => panic!("Can only call inverse on a matrix."),
+                _ => panic!("Can only call transpose on a matrix."),
             };
             LalaType::Matrix(matrix.transpose())
         }
@@ -66,7 +64,7 @@ fn eval_monadic_op(
             let m = eval_expr(env, expr, "determinant");
             let matrix = match m {
                 LalaType::Matrix(mat) => mat,
-                _ => panic!("Can only call inverse on a matrix."),
+                _ => panic!("Can only call determinant on a matrix."),
             };
             LalaType::Double(matrix.det())
         }
@@ -133,13 +131,13 @@ fn eval_assignment(
             }
         }
         AstNode::MonadicOp { verb, expr } => {
-            let result = eval_monadic_op( expr, env, verb);
+            let result = eval_monadic_op(expr, env, verb);
             match env.insert(ident.to_string(), result) {
                 _ => return Ok(()),
             }
         }
         AstNode::DyadicOp { verb, lhs, rhs } => {
-            let result = eval_dyadic_op(lhs, rhs, env, verb);           
+            let result = eval_dyadic_op(lhs, rhs, env, verb);
             match env.insert(ident.to_string(), result) {
                 _ => return Ok(()),
             }

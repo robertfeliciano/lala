@@ -36,6 +36,21 @@ impl Matrix {
         dp
     }
 
+    pub fn rank(&self) -> i32 {
+        let reduced = self.rref().data;
+        let rows = self.rows;
+        let cols = self.cols;
+        let mut rank = 0;
+        for r in 0..rows {
+            let row = &reduced[r*cols..r*cols + cols];
+            let (prefix, aligned, suffix) = unsafe { row.align_to::<f64>() };
+            if !(prefix.iter().all(|&x| x == 0f64)
+                && suffix.iter().all(|&x| x == 0f64)
+                && aligned.iter().all(|&x| x == 0f64)) { rank += 1; }
+        }
+        rank
+    }
+
     pub fn rref(&self) -> Self {
         let mut reduced = self.clone();
         if reduced[0][0] == 0.0 {
@@ -49,7 +64,6 @@ impl Matrix {
                 let mult = reduced[r][lead] / div;
 
                 if r == lead {
-                    // reduced[lead] = reduced[lead].iter().map(|entry| entry / div).collect::<Vec<_>>();
                     reduced[lead]
                         .iter_mut()
                         .for_each(|elem| *elem = (*elem) / div);

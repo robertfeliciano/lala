@@ -50,7 +50,7 @@ verb = {
   // more to come later
 }
 
-integer = @{ "_"? ~ ASCII_DIGIT+ }
+integer = @{ "-"? ~ "_"? ~ ASCII_DIGIT+ }
 
 decimal = @{
     ("_"? ~ ASCII_DIGIT+ ~ "." ~ ASCII_DIGIT*)
