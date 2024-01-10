@@ -146,18 +146,26 @@ fn eval_assignment(
     }
 }
 
-pub fn interp(ast: &Vec<Box<AstNode>>) -> Result<(), anyhow::Error> {
-    let mut env: HashMap<String, LalaType> = HashMap::new();
+pub fn interp(
+    ast: &Vec<Box<AstNode>>,
+    map: Option<&mut HashMap<String, LalaType>>,
+) -> Result<(), anyhow::Error> {
+    let mut binding = HashMap::new();
+    #[allow(unused_mut)]
+    let mut env: &mut HashMap<String, LalaType> = match map {
+        Some(m) => m,
+        None => &mut binding,
+    };
     for node in ast {
         let _ = match node.deref() {
-            AstNode::Assignment { ident, expr } => eval_assignment(ident, expr, &mut env),
+            AstNode::Assignment { ident, expr } => eval_assignment(ident, expr, env),
             AstNode::MonadicOp { verb, expr } => {
-                let result = eval_monadic_op(expr, &mut env, verb);
+                let result = eval_monadic_op(expr, env, verb);
                 println!("{result}");
                 Ok(())
             }
             AstNode::DyadicOp { verb, lhs, rhs } => {
-                let result = eval_dyadic_op(lhs, rhs, &mut env, verb);
+                let result = eval_dyadic_op(lhs, rhs, env, verb);
                 println!("{result}");
                 Ok(())
             }

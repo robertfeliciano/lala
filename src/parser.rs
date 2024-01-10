@@ -13,7 +13,7 @@ pub enum MonadicVerb {
     Inverse,
     RREF,
     Transpose,
-    Determinant
+    Determinant,
 }
 
 #[derive(PartialEq, Eq, Debug, Clone)]

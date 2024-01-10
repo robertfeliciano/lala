@@ -42,11 +42,14 @@ impl Matrix {
         let cols = self.cols;
         let mut rank = 0;
         for r in 0..rows {
-            let row = &reduced[r*cols..r*cols + cols];
+            let row = &reduced[r * cols..r * cols + cols];
             let (prefix, aligned, suffix) = unsafe { row.align_to::<f64>() };
             if !(prefix.iter().all(|&x| x == 0f64)
                 && suffix.iter().all(|&x| x == 0f64)
-                && aligned.iter().all(|&x| x == 0f64)) { rank += 1; }
+                && aligned.iter().all(|&x| x == 0f64))
+            {
+                rank += 1;
+            }
         }
         rank
     }
