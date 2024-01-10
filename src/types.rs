@@ -2,6 +2,7 @@ use crate::matrix::Matrix;
 use crate::parser::AstNode;
 use std::fmt::Display;
 
+#[derive(Clone)]
 pub enum LalaType {
     Integer(i32),
     Double(f64),

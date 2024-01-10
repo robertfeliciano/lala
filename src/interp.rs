@@ -1,83 +1,85 @@
-#![allow(unused)]
 use anyhow::anyhow;
-use lala::matrix::*;
 use lala::parser::*;
 use lala::types::*;
 use std::{
     collections::HashMap,
-    fmt::Display,
-    ops::{Deref, Index, IndexMut},
+    ops::{Deref},
 };
 
+#[inline]
+fn get_value<'a>(map: &'a HashMap<String, LalaType>, key: &'a String) -> LalaType {
+    match map.get(key) {
+        Some(val) => val.clone(),
+        None => panic!("Key not found in the hashmap: {}", key),
+    }
+}
+
+#[inline]
+fn eval_expr(
+    env: &mut HashMap<String, LalaType>, 
+    expr: &Box<AstNode>,
+    func: &str
+) -> LalaType {
+    match expr.deref() {
+        AstNode::Ident(id) => get_value(env, id),
+        AstNode::MonadicOp { verb, expr } => eval_monadic_op(expr, env, verb),
+        AstNode::DyadicOp { verb, lhs, rhs } => eval_dyadic_op(lhs, rhs, env, verb),
+        AstNode::Matrix(m) => LalaType::Matrix(construct_matrix(m)),
+        _ => panic!("Can only call {} on a matrix.", func),
+    }
+}
+
 fn eval_monadic_op(
-    ident: &String,
     expr: &Box<AstNode>,
     env: &mut HashMap<String, LalaType>,
     verb: &MonadicVerb,
-) -> Result<(), anyhow::Error> {
-    match verb {
+) -> LalaType {
+    let result = match verb {
         MonadicVerb::Inverse => {
-            let m = match expr.deref() {
-                AstNode::Ident(id) => match env.get(id).unwrap() {
-                    LalaType::Matrix(m) => m,
-                    _ => panic!("not figured out yet"),
-                },
-                _ => panic!("also not figured out yet"),
+            let m = eval_expr(env, expr, "inverse");
+            let matrix = match m {
+                LalaType::Matrix(mat) => mat,
+                _ => panic!("Can only call inverse on a matrix."),
             };
-            match env.insert(ident.to_string(), LalaType::Matrix(m.inverse())) {
-                _ => return Ok(()),
-            }
+            LalaType::Matrix(matrix.inverse())
         }
         MonadicVerb::Rank => {
             todo!()
         }
         MonadicVerb::RREF => {
-            let m = match expr.deref() {
-                AstNode::Ident(id) => match env.get(id).unwrap() {
-                    LalaType::Matrix(m) => m,
-                    _ => panic!("not figured out yet"),
-                },
-                _ => panic!("also not figured out yet"),
+            let m = eval_expr(env, expr, "rref");
+            let matrix = match m {
+                LalaType::Matrix(mat) => mat,
+                _ => panic!("Can only call inverse on a matrix."),
             };
-            match env.insert(ident.to_string(), LalaType::Matrix(m.rref())) {
-                _ => return Ok(()),
-            }
+            LalaType::Matrix(matrix.rref())
         }
         MonadicVerb::Transpose => {
-            let m = match expr.deref() {
-                AstNode::Ident(id) => match env.get(id).unwrap() {
-                    LalaType::Matrix(m) => m,
-                    _ => panic!("not figured out yet"),
-                },
-                _ => panic!("also not figured out yet"),
+            let m = eval_expr(env, expr, "transpose");
+            let matrix = match m {
+                LalaType::Matrix(mat) => mat,
+                _ => panic!("Can only call inverse on a matrix."),
             };
-            match env.insert(ident.to_string(), LalaType::Matrix(m.transpose())) {
-                _ => return Ok(()),
-            }
+            LalaType::Matrix(matrix.transpose())
         }
         MonadicVerb::Determinant => {
-            let m = match expr.deref() {
-                AstNode::Ident(id) => match env.get(id).unwrap() {
-                    LalaType::Matrix(m) => m,
-                    _ => panic!("not figured out yet"),
-                },
-                _ => panic!("also not figured out yet"),
-
+            let m = eval_expr(env, expr, "determinant");
+            let matrix = match m {
+                LalaType::Matrix(mat) => mat,
+                _ => panic!("Can only call inverse on a matrix."),
             };
-            match env.insert(ident.to_string(), LalaType::Double(m.det())) {
-                _ => return Ok(()),
-            }
+            LalaType::Double(matrix.det())
         }
     };
+    return result;
 }
 
 fn eval_dyadic_op(
-    ident: &String,
     lhs: &Box<AstNode>,
     rhs: &Box<AstNode>,
     env: &mut HashMap<String, LalaType>,
     verb: &DyadicVerb,
-) -> Result<(), anyhow::Error> {
+) -> LalaType {
     match verb {
         DyadicVerb::Dot => {
             let leftside = match lhs.deref() {
@@ -85,7 +87,10 @@ fn eval_dyadic_op(
                     LalaType::Matrix(m) => m,
                     _ => panic!("not allowed"),
                 },
-                // AstNode::Matrix(m) => &LalaType::Matrix(construct_matrix(&m)),
+                // AstNode::Matrix(m) => {
+                //     let x = &construct_matrix(m);
+                //     x
+                // }
                 _ => panic!("oops"),
             };
             let rightside = match rhs.deref() {
@@ -96,12 +101,8 @@ fn eval_dyadic_op(
                 // AstNode::Matrix(m) => &LalaType::Matrix(construct_matrix(&m)),
                 _ => panic!("oops"),
             };
-            match env.insert(
-                ident.to_string(),
-                LalaType::Matrix(leftside.dot(rightside.clone())),
-            ) {
-                _ => Ok(()),
-            }
+            let result = LalaType::Matrix(leftside.dot(rightside.clone()));
+            return result;
 
             // Ok(())
         }
@@ -126,15 +127,23 @@ fn eval_assignment(
             }
         }
         AstNode::Matrix(v) => {
-            let data = lala::types::construct_matrix(v);
-            match env.insert(ident.to_string(), LalaType::Matrix(data)) {
+            let mat = lala::types::construct_matrix(v);
+            match env.insert(ident.to_string(), LalaType::Matrix(mat)) {
                 _ => Ok(()),
             }
         }
-        AstNode::MonadicOp { verb, expr } => 
-            eval_monadic_op(ident, expr, env, verb),
-        AstNode::DyadicOp { verb, lhs, rhs } => 
-            eval_dyadic_op(ident, lhs, rhs, env, verb),
+        AstNode::MonadicOp { verb, expr } => {
+            let result = eval_monadic_op( expr, env, verb);
+            match env.insert(ident.to_string(), result) {
+                _ => return Ok(()),
+            }
+        }
+        AstNode::DyadicOp { verb, lhs, rhs } => {
+            let result = eval_dyadic_op(lhs, rhs, env, verb);           
+            match env.insert(ident.to_string(), result) {
+                _ => return Ok(()),
+            }
+        }
         _ => Err(anyhow!("bruh")),
     }
 }
@@ -144,9 +153,16 @@ pub fn interp(ast: &Vec<Box<AstNode>>) -> Result<(), anyhow::Error> {
     for node in ast {
         let _ = match node.deref() {
             AstNode::Assignment { ident, expr } => eval_assignment(ident, expr, &mut env),
-            AstNode::MonadicOp { verb, expr } => todo!(),
-            // move dyadic logic in eval_assignment into eval_dyadicop to reuse here
-            AstNode::DyadicOp { verb, lhs, rhs } => todo!(),
+            AstNode::MonadicOp { verb, expr } => {
+                let result = eval_monadic_op(expr, &mut env, verb);
+                println!("{result}");
+                Ok(())
+            }
+            AstNode::DyadicOp { verb, lhs, rhs } => {
+                let result = eval_dyadic_op(lhs, rhs, &mut env, verb);
+                println!("{result}");
+                Ok(())
+            }
             AstNode::Ident(var) => {
                 println!("{}", env.get(var).unwrap());
                 Ok(())
