@@ -61,4 +61,4 @@ ident = @{ ASCII_ALPHA ~ (ASCII_ALPHANUMERIC | "_")* }
 
 WHITESPACE = _{ " " | "\t" }
 
-COMMENT = _{ "//" | "/" ~ "*"+ ~ "\n"? ~ ANY* ~ "\n"? ~ "*"+ ~ "/" }
+COMMENT = _{"(*" ~ "\n"? ~ ANY* ~ "\n"? ~ "*)" }
