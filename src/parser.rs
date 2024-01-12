@@ -47,7 +47,7 @@ pub enum AstNode<'a> {
     Command((&'a str, Vec<&'a str>)),
 }
 
-fn build_ast_from_term(pair: pest::iterators::Pair<Rule>) -> AstNode {
+fn build_ast_from_term(pair: Pair<Rule>) -> AstNode {
     match pair.as_rule() {
         Rule::integer => {
             let istr = pair.as_str();

@@ -27,49 +27,18 @@ fn eval_monadic_op(
     env: &mut HashMap<String, LalaType>,
     verb: &MonadicVerb,
 ) -> LalaType {
-    let result = match verb {
-        MonadicVerb::Inverse => {
-            let m = eval_expr(env, expr, "inverse");
-            let matrix = match m {
-                LalaType::Matrix(mat) => mat,
-                _ => panic!("Can only call inverse on a matrix."),
-            };
-            LalaType::Matrix(matrix.inverse())
-        }
-        MonadicVerb::Rank => {
-            let m = eval_expr(env, expr, "rank");
-            let matrix = match m {
-                LalaType::Matrix(mat) => mat,
-                _ => panic!("Can only call rank on a matrix."),
-            };
-            LalaType::Integer(matrix.rank())
-        }
-        MonadicVerb::RREF => {
-            let m = eval_expr(env, expr, "rref");
-            let matrix = match m {
-                LalaType::Matrix(mat) => mat,
-                _ => panic!("Can only call rref on a matrix."),
-            };
-            LalaType::Matrix(matrix.rref())
-        }
-        MonadicVerb::Transpose => {
-            let m = eval_expr(env, expr, "transpose");
-            let matrix = match m {
-                LalaType::Matrix(mat) => mat,
-                _ => panic!("Can only call transpose on a matrix."),
-            };
-            LalaType::Matrix(matrix.transpose())
-        }
-        MonadicVerb::Determinant => {
-            let m = eval_expr(env, expr, "determinant");
-            let matrix = match m {
-                LalaType::Matrix(mat) => mat,
-                _ => panic!("Can only call determinant on a matrix."),
-            };
-            LalaType::Double(matrix.det())
-        }
+    let func = verb.to_string();
+    let matrix = match eval_expr(env, expr, &func) {
+        LalaType::Matrix(mat) => mat,
+        _ => panic!("Can only call {func} on a matrix."),
     };
-    result
+    match verb {
+        MonadicVerb::Inverse => LalaType::Matrix(matrix.inverse()),
+        MonadicVerb::Rank => LalaType::Integer(matrix.rank()),
+        MonadicVerb::RREF => LalaType::Matrix(matrix.rref()),
+        MonadicVerb::Transpose => LalaType::Matrix(matrix.transpose()),
+        MonadicVerb::Determinant => LalaType::Double(matrix.det()),
+    }
 }
 
 fn eval_dyadic_op(
@@ -78,34 +47,21 @@ fn eval_dyadic_op(
     env: &mut HashMap<String, LalaType>,
     verb: &DyadicVerb,
 ) -> LalaType {
+    let func = verb.to_string();
+    let leftside = if let LalaType::Matrix(left) = eval_expr(env, lhs, &func) {
+        left
+    } else {
+        panic!("can only call {func} on a matrix");
+    };
+    let rightside = if let LalaType::Matrix(right) = eval_expr(env, rhs, &func) {
+        right
+    } else {
+        panic!("can only call {func} on a matrix");
+    };
     match verb {
-        DyadicVerb::Dot => {
-            let leftside = match lhs.deref() {
-                AstNode::Ident(id) => match env.get(id).unwrap() {
-                    LalaType::Matrix(m) => m,
-                    _ => panic!("not allowed"),
-                },
-                // AstNode::Matrix(m) => {
-                //     let x = &construct_matrix(m);
-                //     x
-                // }
-                _ => panic!("oops"),
-            };
-            let rightside = match rhs.deref() {
-                AstNode::Ident(id) => match env.get(id).unwrap() {
-                    LalaType::Matrix(m) => m,
-                    _ => panic!("not allowed"),
-                },
-                // AstNode::Matrix(m) => &LalaType::Matrix(construct_matrix(&m)),
-                _ => panic!("oops"),
-            };
-            let result = LalaType::Matrix(leftside.dot(rightside.clone()));
-            return result;
-
-            // Ok(())
-        }
-        DyadicVerb::Plus => todo!(),
-        DyadicVerb::Times => todo!(),
+        DyadicVerb::Dot => LalaType::Matrix(leftside.dot(rightside.clone())),
+        DyadicVerb::Plus => LalaType::Matrix(leftside.combine(rightside, |a, b| a + b)),
+        DyadicVerb::Times => LalaType::Matrix(leftside.combine(rightside, |a, b| a * b)),
     }
 }
 
@@ -146,6 +102,16 @@ fn eval_assignment(
     }
 }
 
+fn eval_cmd(cmd: &str, _cmd_params: &Vec<&str>) -> Result<(), anyhow::Error> {
+    match cmd {
+        "link" |
+        "interp" |
+        "dbg" => println!("nice command!"),
+        _ => todo!()
+    }
+    Ok(())
+}
+
 pub fn interp(
     ast: &Vec<Box<AstNode>>,
     map: Option<&mut HashMap<String, LalaType>>,
@@ -173,7 +139,7 @@ pub fn interp(
                 println!("{}", env.get(var).unwrap());
                 Ok(())
             }
-            AstNode::Command((_cmd, _cmd_params)) => Ok(()),
+            AstNode::Command((cmd, cmd_params)) => eval_cmd(*cmd, cmd_params),
             bad_line => panic!("Invalid line: {:?}", bad_line),
         };
     }

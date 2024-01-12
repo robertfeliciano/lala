@@ -1,5 +1,5 @@
 use crate::matrix::Matrix;
-use crate::parser::AstNode;
+use crate::parser::{AstNode, DyadicVerb, MonadicVerb};
 use std::fmt::Display;
 
 #[derive(Clone)]
@@ -29,6 +29,28 @@ impl Display for LalaType {
             }
         };
         Ok(())
+    }
+}
+
+impl ToString for MonadicVerb {
+    fn to_string(&self) -> String {
+        match self {
+            MonadicVerb::Rank => String::from("matrix rank"),
+            MonadicVerb::Inverse => String::from("matrix inverse"),
+            MonadicVerb::RREF => String::from("matrix rref"),
+            MonadicVerb::Transpose => String::from("matrix transpose"),
+            MonadicVerb::Determinant => String::from("matrix determinant"),
+        }
+    }
+}
+
+impl ToString for DyadicVerb {
+    fn to_string(&self) -> String {
+        match self {
+            DyadicVerb::Dot => String::from("dot product"),
+            DyadicVerb::Plus => String::from("matrix addition"),
+            DyadicVerb::Times => String::from("matrix multiplication"),
+        }
     }
 }
 
