@@ -11,11 +11,13 @@ gflags::define! {
 }
 
 fn get_extension(path: &str) -> Result<&str, anyhow::Error> {
-    let ext = Path::new(path).extension().and_then(|ext| ext.to_str()).unwrap();
-    if ext != "lala"{
+    let ext = Path::new(path)
+        .extension()
+        .and_then(|ext| ext.to_str())
+        .unwrap();
+    if ext != "lala" {
         Err(anyhow!("Not a lala file!"))
-    }
-    else {
+    } else {
         Ok(ext)
     }
 }
@@ -25,15 +27,14 @@ fn main() -> Result<(), anyhow::Error> {
     if COMPILE.is_present() {
         let path = COMPILE.flag.to_str().unwrap();
         match get_extension(path) {
-            Ok(_) => {},
+            Ok(_) => {}
             Err(e) => {
                 eprintln!("Error: {}", e);
                 return Ok(());
-            },
+            }
         }
-        
-        let raw_file = std::fs::read_to_string(path)?;
 
+        let raw_file = std::fs::read_to_string(path)?;
 
         let ast_root = lala::parser::parse(&raw_file)?;
         interp::interp(&ast_root, None)?;

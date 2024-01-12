@@ -1,5 +1,6 @@
 use self::AstNode::*;
 use pest::error::Error;
+use pest::iterators::{Pair, Pairs};
 use pest::Parser;
 use pest_derive::Parser;
 
@@ -24,25 +25,26 @@ pub enum DyadicVerb {
 }
 
 #[derive(PartialEq, Debug, Clone)]
-pub enum AstNode {
+pub enum AstNode<'a> {
     Integer(i32),
     DoublePrecisionFloat(f64),
     MonadicOp {
         verb: MonadicVerb,
-        expr: Box<AstNode>,
+        expr: Box<AstNode<'a>>,
     },
     DyadicOp {
         verb: DyadicVerb,
-        lhs: Box<AstNode>,
-        rhs: Box<AstNode>,
+        lhs: Box<AstNode<'a>>,
+        rhs: Box<AstNode<'a>>,
     },
-    Terms(Vec<AstNode>),
+    Terms(Vec<AstNode<'a>>),
     Assignment {
         ident: String,
-        expr: Box<AstNode>,
+        expr: Box<AstNode<'a>>,
     },
     Ident(String),
-    Matrix(Vec<Vec<AstNode>>),
+    Matrix(Vec<Vec<AstNode<'a>>>),
+    Command((&'a str, Vec<&'a str>)),
 }
 
 fn build_ast_from_term(pair: pest::iterators::Pair<Rule>) -> AstNode {
@@ -73,12 +75,12 @@ fn build_ast_from_term(pair: pest::iterators::Pair<Rule>) -> AstNode {
     }
 }
 
-fn parse_monadic_verb(pair: pest::iterators::Pair<Rule>, expr: AstNode) -> Option<AstNode> {
+fn parse_monadic_verb<'a>(pair: Pair<Rule>, expr: AstNode<'a>) -> Option<AstNode<'a>> {
     Some(AstNode::MonadicOp {
         verb: match pair.as_str() {
             "#" => MonadicVerb::Rank,
             "?" => MonadicVerb::Inverse,
-            "$" => MonadicVerb::RREF,
+            "rref" => MonadicVerb::RREF,
             "%" => MonadicVerb::Transpose,
             "det" => MonadicVerb::Determinant,
             _ => panic!("Monadic {} not supported (yet?)", pair.as_str()),
@@ -87,11 +89,11 @@ fn parse_monadic_verb(pair: pest::iterators::Pair<Rule>, expr: AstNode) -> Optio
     })
 }
 
-fn parse_dyadic_verb(
-    pair: pest::iterators::Pair<Rule>,
-    lhs: AstNode,
-    rhs: AstNode,
-) -> Option<AstNode> {
+fn parse_dyadic_verb<'a>(
+    pair: Pair<Rule>,
+    lhs: AstNode<'a>,
+    rhs: AstNode<'a>,
+) -> Option<AstNode<'a>> {
     Some(AstNode::DyadicOp {
         lhs: Box::new(lhs),
         rhs: Box::new(rhs),
@@ -104,9 +106,21 @@ fn parse_dyadic_verb(
     })
 }
 
-fn build_ast_from_expr(pair: pest::iterators::Pair<Rule>) -> Option<AstNode> {
+fn parse_cmd<'a>(cmd: Pair<'a, Rule>, cmd_params: Pairs<'a, Rule>) -> Option<AstNode<'a>> {
+    let my_params: Vec<&str> = cmd_params.into_iter().map(|s| s.as_str()).collect();
+
+    Some(AstNode::Command((cmd.as_str(), my_params)))
+}
+
+fn build_ast_from_expr(pair: Pair<Rule>) -> Option<AstNode> {
     match pair.as_rule() {
         Rule::expr => build_ast_from_expr(pair.into_inner().next()?),
+        Rule::command => {
+            let mut pair = pair.into_inner();
+            let cmd = pair.next()?;
+            let cmd_params = pair.next()?.into_inner();
+            parse_cmd(cmd, cmd_params)
+        }
         Rule::monadic => {
             let mut pair = pair.into_inner();
             let verb = pair.next()?;

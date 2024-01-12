@@ -69,7 +69,7 @@ fn eval_monadic_op(
             LalaType::Double(matrix.det())
         }
     };
-    return result;
+    result
 }
 
 fn eval_dyadic_op(
@@ -173,6 +173,7 @@ pub fn interp(
                 println!("{}", env.get(var).unwrap());
                 Ok(())
             }
+            AstNode::Command((_cmd, _cmd_params)) => Ok(()),
             bad_line => panic!("Invalid line: {:?}", bad_line),
         };
     }

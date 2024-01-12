@@ -1,6 +1,6 @@
 program = _{ SOI ~ "\n"* ~ (stmt ~ "\n"+)* ~ stmt? ~ EOI }
 
-stmt = _{ expr }
+stmt = _{ expr } 
 
 expr = {
     assn
@@ -9,11 +9,12 @@ expr = {
   | ident
   | matrix
   | terms
+  | command
 }
 
 monadic = { verb ~ expr }
 
-dyadic = { (monadic | terms | ident) ~ verb ~ expr }
+dyadic = { (monadic | terms | ident ) ~ verb ~ expr }
 
 assn = { "let" ~ ident ~ "=" ~ expr }
 
@@ -34,7 +35,7 @@ verb = {
 
   | "?" // inverse
 
-  | "$" // rref
+  | "rref" // rref
 
   | "%" // transpose
 
@@ -59,6 +60,15 @@ decimal = @{
 
 ident = @{ ASCII_ALPHA ~ (ASCII_ALPHANUMERIC | "_")* }
 
+cmd = @{
+	ASCII_ALPHANUMERIC+
+}
+
+cmd_param = @{ ASCII_ALPHANUMERIC+ ~ "."? ~ ASCII_ALPHANUMERIC*}
+cmd_params = { cmd_param+ }
+
+command = { "/" ~ cmd ~ cmd_params }
+
 WHITESPACE = _{ " " | "\t" }
 
-COMMENT = _{"(*" ~ "\n"? ~ ANY* ~ "\n"? ~ "*)" }
+COMMENT = _{ "/*" ~ (!"*/" ~ ANY)* ~ "*/" | "//" ~ (!"\n" ~ ANY)* }
