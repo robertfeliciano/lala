@@ -2,9 +2,12 @@ use std::path::Path;
 
 use anyhow::anyhow;
 
-pub mod interp;
-pub mod parser;
-pub mod repl;
+mod interp;
+mod parser;
+mod types;
+mod repl;
+mod commands;
+mod matrix;
 
 gflags::define! {
     -c, --compile: &Path
@@ -36,8 +39,8 @@ fn main() -> Result<(), anyhow::Error> {
 
         let raw_file = std::fs::read_to_string(path)?;
 
-        let ast_root = lala::parser::parse(&raw_file)?;
-        interp::interp(&ast_root, None)?;
+        let ast_root = parser::parse(&raw_file)?;
+        interp::interp(&ast_root, None, false)?;
         Ok(())
     } else {
         repl::repl()

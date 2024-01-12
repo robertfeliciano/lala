@@ -64,7 +64,7 @@ cmd = @{
 	ASCII_ALPHANUMERIC+
 }
 
-cmd_param = @{ ASCII_ALPHANUMERIC+ ~ "."? ~ ASCII_ALPHANUMERIC*}
+cmd_param = @{ (!WHITESPACE~ ANY)+ }
 cmd_params = { cmd_param+ }
 
 command = { "/" ~ cmd ~ cmd_params }

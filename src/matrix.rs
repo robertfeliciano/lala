@@ -140,6 +140,7 @@ impl Matrix {
         t
     }
 
+    #[allow(dead_code)]
     pub fn trace(&self) -> f64 {
         if self.rows != self.cols {
             panic!(
@@ -174,6 +175,7 @@ impl Matrix {
         inv
     }
 
+    #[allow(dead_code)]
     pub fn identity(&mut self) {
         if self.rows != self.cols {
             panic!("Not a square matrix.");

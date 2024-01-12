@@ -1,6 +1,7 @@
 use anyhow::anyhow;
-use lala::parser::*;
-use lala::types::*;
+use super::parser::*;
+use super::types::*;
+use super::commands;
 use std::{collections::HashMap, ops::Deref};
 
 #[inline]
@@ -81,7 +82,7 @@ fn eval_assignment(
             }
         }
         AstNode::Matrix(v) => {
-            let mat = lala::types::construct_matrix(v);
+            let mat = construct_matrix(v);
             match env.insert(ident.to_string(), LalaType::Matrix(mat)) {
                 _ => Ok(()),
             }
@@ -102,19 +103,19 @@ fn eval_assignment(
     }
 }
 
-fn eval_cmd(cmd: &str, _cmd_params: &Vec<&str>) -> Result<(), anyhow::Error> {
+fn eval_cmd(cmd: &str, cmd_params: &Vec<&str>, env: &mut HashMap<String, LalaType>) -> Result<(), anyhow::Error> {
     match cmd {
-        "link" |
+        "link" => commands::link(cmd_params, env),
         "interp" |
-        "dbg" => println!("nice command!"),
+        "dbg" |
         _ => todo!()
     }
-    Ok(())
 }
 
 pub fn interp(
     ast: &Vec<Box<AstNode>>,
     map: Option<&mut HashMap<String, LalaType>>,
+    linking: bool
 ) -> Result<(), anyhow::Error> {
     let mut binding = HashMap::new();
     #[allow(unused_mut)]
@@ -127,19 +128,19 @@ pub fn interp(
             AstNode::Assignment { ident, expr } => eval_assignment(ident, expr, env),
             AstNode::MonadicOp { verb, expr } => {
                 let result = eval_monadic_op(expr, env, verb);
-                println!("{result}");
+                if !linking { println!("{result}"); }
                 Ok(())
             }
             AstNode::DyadicOp { verb, lhs, rhs } => {
                 let result = eval_dyadic_op(lhs, rhs, env, verb);
-                println!("{result}");
+                if !linking { println!("{result}"); }
                 Ok(())
             }
             AstNode::Ident(var) => {
-                println!("{}", env.get(var).unwrap());
+                if !linking { println!("{}", env.get(var).unwrap()); }
                 Ok(())
             }
-            AstNode::Command((cmd, cmd_params)) => eval_cmd(*cmd, cmd_params),
+            AstNode::Command((cmd, cmd_params)) => eval_cmd(*cmd, cmd_params, env),
             bad_line => panic!("Invalid line: {:?}", bad_line),
         };
     }

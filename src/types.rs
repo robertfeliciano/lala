@@ -1,4 +1,4 @@
-use crate::matrix::Matrix;
+use super::matrix::Matrix;
 use crate::parser::{AstNode, DyadicVerb, MonadicVerb};
 use std::fmt::Display;
 

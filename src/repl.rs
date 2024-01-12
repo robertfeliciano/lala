@@ -3,10 +3,10 @@ use std::{
     io::{stdin, stdout, Write},
 };
 
-use interp::interp;
-use lala::types::*;
+use super::interp::interp;
+use super::parser;
+use super::types::LalaType;
 
-use crate::interp;
 
 pub fn repl() -> Result<(), anyhow::Error> {
     let mut env: HashMap<String, LalaType> = HashMap::new();
@@ -18,7 +18,7 @@ pub fn repl() -> Result<(), anyhow::Error> {
         stdin().read_line(&mut input)?;
 
         let line = input.trim();
-        let ast = lala::parser::parse(line)?;
-        interp(&ast, Some(&mut env))?;
+        let ast = parser::parse(line)?;
+        interp(&ast, Some(&mut env), false)?;
     }
 }
