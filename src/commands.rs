@@ -1,7 +1,7 @@
-use std::collections::HashMap;
-use super::types::*;
-use super::parser;
 use super::interp;
+use super::parser;
+use super::types::*;
+use std::collections::HashMap;
 
 pub fn link(files: &Vec<&str>, env: &mut HashMap<String, LalaType>) -> Result<(), anyhow::Error> {
     for file in files {

@@ -7,7 +7,6 @@ use super::interp::interp;
 use super::parser;
 use super::types::LalaType;
 
-
 pub fn repl() -> Result<(), anyhow::Error> {
     let mut env: HashMap<String, LalaType> = HashMap::new();
     println!("Lala Shell v0.0.1");

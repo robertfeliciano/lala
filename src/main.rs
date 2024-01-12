@@ -2,12 +2,12 @@ use std::path::Path;
 
 use anyhow::anyhow;
 
-mod interp;
-mod parser;
-mod types;
-mod repl;
 mod commands;
+mod interp;
 mod matrix;
+mod parser;
+mod repl;
+mod types;
 
 gflags::define! {
     -c, --compile: &Path

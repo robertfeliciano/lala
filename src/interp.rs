@@ -1,7 +1,7 @@
-use anyhow::anyhow;
+use super::commands;
 use super::parser::*;
 use super::types::*;
-use super::commands;
+use anyhow::anyhow;
 use std::{collections::HashMap, ops::Deref};
 
 #[inline]
@@ -103,19 +103,21 @@ fn eval_assignment(
     }
 }
 
-fn eval_cmd(cmd: &str, cmd_params: &Vec<&str>, env: &mut HashMap<String, LalaType>) -> Result<(), anyhow::Error> {
+fn eval_cmd(
+    cmd: &str,
+    cmd_params: &Vec<&str>,
+    env: &mut HashMap<String, LalaType>,
+) -> Result<(), anyhow::Error> {
     match cmd {
         "link" => commands::link(cmd_params, env),
-        "interp" |
-        "dbg" |
-        _ => todo!()
+        "interp" | "dbg" | _ => todo!(),
     }
 }
 
 pub fn interp(
     ast: &Vec<Box<AstNode>>,
     map: Option<&mut HashMap<String, LalaType>>,
-    linking: bool
+    linking: bool,
 ) -> Result<(), anyhow::Error> {
     let mut binding = HashMap::new();
     #[allow(unused_mut)]
@@ -128,16 +130,22 @@ pub fn interp(
             AstNode::Assignment { ident, expr } => eval_assignment(ident, expr, env),
             AstNode::MonadicOp { verb, expr } => {
                 let result = eval_monadic_op(expr, env, verb);
-                if !linking { println!("{result}"); }
+                if !linking {
+                    println!("{result}");
+                }
                 Ok(())
             }
             AstNode::DyadicOp { verb, lhs, rhs } => {
                 let result = eval_dyadic_op(lhs, rhs, env, verb);
-                if !linking { println!("{result}"); }
+                if !linking {
+                    println!("{result}");
+                }
                 Ok(())
             }
             AstNode::Ident(var) => {
-                if !linking { println!("{}", env.get(var).unwrap()); }
+                if !linking {
+                    println!("{}", env.get(var).unwrap());
+                }
                 Ok(())
             }
             AstNode::Command((cmd, cmd_params)) => eval_cmd(*cmd, cmd_params, env),
