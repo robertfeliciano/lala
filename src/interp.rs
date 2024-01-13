@@ -76,10 +76,13 @@ fn eval_assignment(
         {
             _ => Ok(()),
         },
-        AstNode::DoublePrecisionFloat(scalar) => {
-            match env.insert(ident.to_string(), LalaType::Double(*scalar)) {
-                _ => Ok(()),
-            }
+        AstNode::DoublePrecisionFloat(scalar) => match env.insert(ident.to_string(), LalaType::Double(*scalar)) 
+        {
+            _ => Ok(()),
+        }
+        AstNode::Ident(rhs_ident) => match env.insert(ident.to_string(), env.get(rhs_ident).unwrap().clone()) 
+        {
+            _ => Ok(()),
         }
         AstNode::Matrix(v) => {
             let mat = construct_matrix(v);
@@ -110,7 +113,8 @@ fn eval_cmd(
 ) -> Result<(), anyhow::Error> {
     match cmd {
         "link" => commands::link(cmd_params, env),
-        "interp" | "dbg" | _ => todo!(),
+        "dbg" => commands::debug(env),
+        _ => todo!(),
     }
 }
 

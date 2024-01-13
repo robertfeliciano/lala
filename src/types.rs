@@ -2,7 +2,7 @@ use super::matrix::Matrix;
 use crate::parser::{AstNode, DyadicVerb, MonadicVerb};
 use std::fmt::Display;
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub enum LalaType {
     Integer(i32),
     Double(f64),

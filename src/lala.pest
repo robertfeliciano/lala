@@ -67,7 +67,7 @@ cmd = @{
 cmd_param = @{ (!WHITESPACE~ ANY)+ }
 cmd_params = { cmd_param+ }
 
-command = { "/" ~ cmd ~ cmd_params }
+command = { "/" ~ cmd ~ cmd_params* }
 
 WHITESPACE = _{ " " | "\t" }
 

@@ -106,10 +106,13 @@ fn parse_dyadic_verb<'a>(
     })
 }
 
-fn parse_cmd<'a>(cmd: Pair<'a, Rule>, cmd_params: Pairs<'a, Rule>) -> Option<AstNode<'a>> {
-    let my_params: Vec<&str> = cmd_params.into_iter().map(|s| s.as_str()).collect();
+fn parse_cmd<'a>(cmd: Pair<'a, Rule>, cmd_params: Option<Pairs<'a, Rule>>) -> Option<AstNode<'a>> {
+    let params: Vec<&str> = match cmd_params {
+        Some(p) => p.into_iter().map(|s| s.as_str()).collect(),
+        None => vec![],
+    };
 
-    Some(AstNode::Command((cmd.as_str(), my_params)))
+    Some(AstNode::Command((cmd.as_str(), params)))
 }
 
 fn build_ast_from_expr(pair: Pair<Rule>) -> Option<AstNode> {
@@ -118,8 +121,11 @@ fn build_ast_from_expr(pair: Pair<Rule>) -> Option<AstNode> {
         Rule::command => {
             let mut pair = pair.into_inner();
             let cmd = pair.next()?;
+            if cmd.as_str() == "dbg" {
+                return parse_cmd(cmd, None);
+            }
             let cmd_params = pair.next()?.into_inner();
-            parse_cmd(cmd, cmd_params)
+            parse_cmd(cmd, Some(cmd_params))
         }
         Rule::monadic => {
             let mut pair = pair.into_inner();
