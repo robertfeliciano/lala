@@ -8,6 +8,8 @@ pub fn link(files: &Vec<&str>, env: &mut HashMap<String, LalaType>) -> Result<()
         let raw_file = std::fs::read_to_string(file)?;
         let ast_root = parser::parse(&raw_file)?;
         // IDEA: pass in file name option for linkage instead of bool, append it to the beginning of the linked var names
+        // ex: /link file.lala
+        // vars in file.lala would be exported as file::a, where a is defined in file.lala
         interp::interp(&ast_root, Some(env), true)?;
     }
     Ok(())

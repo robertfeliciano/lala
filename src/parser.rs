@@ -44,7 +44,17 @@ pub enum AstNode<'a> {
     },
     Ident(String),
     Matrix(Vec<Vec<AstNode<'a>>>),
+    Vector(Vec<AstNode<'a>>),
     Command((&'a str, Vec<&'a str>)),
+}
+
+fn build_ast_from_terms(pair: Pairs<Rule>) -> Vec<AstNode> {
+    pair.into_iter()
+        .nth(0)
+        .unwrap()
+        .into_inner()
+        .map(build_ast_from_term)
+        .collect()
 }
 
 fn build_ast_from_term(pair: Pair<Rule>) -> AstNode {
@@ -167,6 +177,10 @@ fn build_ast_from_expr(pair: Pair<Rule>) -> Option<AstNode> {
                 mat.push(terms);
             }
             Some(Matrix(mat))
+        }
+        Rule::vector => {
+            let vec: Vec<AstNode> = build_ast_from_terms(pair.into_inner());
+            Some(Vector(vec))
         }
         bad_expr => panic!("Unexpected expression: {:?}", bad_expr),
     }

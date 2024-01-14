@@ -19,6 +19,7 @@ fn eval_expr(env: &mut HashMap<String, LalaType>, expr: &Box<AstNode>, func: &st
         AstNode::MonadicOp { verb, expr } => eval_monadic_op(expr, env, verb),
         AstNode::DyadicOp { verb, lhs, rhs } => eval_dyadic_op(lhs, rhs, env, verb),
         AstNode::Matrix(m) => LalaType::Matrix(construct_matrix(m)),
+        AstNode::Vector(v) => LalaType::Vector(construct_vector(v)),
         _ => panic!("Can only call {} on a matrix.", func),
     }
 }
@@ -60,7 +61,7 @@ fn eval_dyadic_op(
         panic!("can only call {func} on a matrix");
     };
     match verb {
-        DyadicVerb::Dot => LalaType::Matrix(leftside.dot(rightside.clone())),
+        DyadicVerb::Dot => LalaType::Matrix(leftside.dot(rightside)),
         DyadicVerb::Plus => LalaType::Matrix(leftside.combine(rightside, |a, b| a + b)),
         DyadicVerb::Times => LalaType::Matrix(leftside.combine(rightside, |a, b| a * b)),
     }
@@ -76,17 +77,25 @@ fn eval_assignment(
         {
             _ => Ok(()),
         },
-        AstNode::DoublePrecisionFloat(scalar) => match env.insert(ident.to_string(), LalaType::Double(*scalar)) 
-        {
-            _ => Ok(()),
+        AstNode::DoublePrecisionFloat(scalar) => {
+            match env.insert(ident.to_string(), LalaType::Double(*scalar)) {
+                _ => Ok(()),
+            }
         }
-        AstNode::Ident(rhs_ident) => match env.insert(ident.to_string(), env.get(rhs_ident).unwrap().clone()) 
-        {
-            _ => Ok(()),
+        AstNode::Ident(rhs_ident) => {
+            match env.insert(ident.to_string(), env.get(rhs_ident).unwrap().clone()) {
+                _ => Ok(()),
+            }
         }
         AstNode::Matrix(v) => {
             let mat = construct_matrix(v);
             match env.insert(ident.to_string(), LalaType::Matrix(mat)) {
+                _ => Ok(()),
+            }
+        }
+        AstNode::Vector(v) => {
+            let vec = construct_vector(v);
+            match env.insert(ident.to_string(), LalaType::Vector(vec)) {
                 _ => Ok(()),
             }
         }

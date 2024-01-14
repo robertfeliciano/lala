@@ -8,6 +8,7 @@ expr = {
   | dyadic
   | ident
   | matrix
+  | vector
   | terms
   | command
 }
@@ -19,8 +20,11 @@ dyadic = { (monadic | terms | ident ) ~ verb ~ expr }
 assn = { "let" ~ ident ~ "=" ~ expr }
 
 matrix = {
-    (terms+ ~ ";")+ ~ terms ~ ";"?
+    (terms ~ ";")+ ~ terms ~ ";"?
 }
+
+vector = { terms ~ ";"?}
+
 
 terms = { term+ }
 
@@ -65,9 +69,9 @@ cmd = @{
 }
 
 cmd_param = @{ (!WHITESPACE~ ANY)+ }
-cmd_params = { cmd_param+ }
+cmd_params = { cmd_param* }
 
-command = { "/" ~ cmd ~ cmd_params* }
+command = { "/" ~ cmd ~ cmd_params }
 
 WHITESPACE = _{ " " | "\t" }
 

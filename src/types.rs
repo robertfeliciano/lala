@@ -7,6 +7,7 @@ pub enum LalaType {
     Integer(i32),
     Double(f64),
     Matrix(Matrix),
+    Vector(Matrix),
 }
 
 impl Display for LalaType {
@@ -26,6 +27,16 @@ impl Display for LalaType {
                     }
                     writeln!(f, "]")?;
                 }
+            }
+            LalaType::Vector(v) => {
+                for c in 0..v.cols {
+                    if c == v.cols - 1 {
+                        write!(f, "{:.2}", v[0][c])?;
+                    } else {
+                        write!(f, "{:.2} ", v[0][c])?;
+                    }
+                }
+                writeln!(f, "]")?;
             }
         };
         Ok(())
@@ -73,5 +84,22 @@ pub fn construct_matrix(v: &Vec<Vec<AstNode>>) -> Matrix {
         rows,
         cols,
         data: mat,
+    }
+}
+
+pub fn construct_vector(v: &Vec<AstNode>) -> Matrix {
+    let cols = v.len();
+    let mut vec: Vec<f64> = vec![0f64; cols];
+    for col in 0..cols {
+        match &v[col] {
+            AstNode::Integer(i) => vec[col] = *i as f64,
+            AstNode::DoublePrecisionFloat(d) => vec[col] = *d,
+            err => panic!("{:?} not allowed in vector definition", err),
+        }
+    }
+    Matrix {
+        rows: 1,
+        cols,
+        data: vec,
     }
 }
