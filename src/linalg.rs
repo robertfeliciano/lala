@@ -7,6 +7,50 @@ pub struct Matrix {
     pub data: Vec<f64>,
 }
 
+#[derive(Debug, PartialEq, Clone)]
+pub struct Vector {
+    pub len: usize,
+    pub data: Vec<f64>,
+}
+
+impl Vector {
+    pub fn new(len: usize) -> Self {
+        Self {
+            len,
+            data: vec![0.0; len],
+        }
+    }
+    #[allow(dead_code)]
+    pub fn apply(&self, f: impl Fn(f64) -> f64) -> Vec<f64> {
+        self.data.iter().map(|elem| f(*elem)).collect()
+    }
+    #[allow(dead_code)]
+    pub fn combine(&self, b: Self, f: impl Fn(f64, f64) -> f64) -> Self {
+        if self.len != b.len {
+            panic!("Vectors must be of the same size.");
+        }
+        let mut new_matrix = Self::new(self.len);
+        new_matrix.data = self
+            .data
+            .iter()
+            .zip(b.data.iter())
+            .map(|(a, b)| f(*a, *b))
+            .collect();
+        new_matrix
+    }
+    #[allow(dead_code)]
+    pub fn dot(&self, b: Self) -> f64 {
+        if self.len != b.len {
+            panic!("Vectors must be of the same size");
+        }
+        self.data
+            .iter()
+            .zip(b.data.iter())
+            .map(|(x, y)| x + y)
+            .sum()
+    }
+}
+
 impl Matrix {
     pub fn new(rows: usize, cols: usize) -> Self {
         Self {
@@ -185,8 +229,8 @@ impl Matrix {
         }
     }
 
-    pub fn apply(&mut self, f: impl Fn(f64) -> f64) {
-        self.data = self.data.iter().map(|elem| f(*elem)).collect()
+    pub fn apply(&self, f: impl Fn(f64) -> f64) -> Vec<f64> {
+        self.data.iter().map(|elem| f(*elem)).collect()
     }
 
     pub fn combine(&self, b: Self, f: impl Fn(f64, f64) -> f64) -> Self {
@@ -251,5 +295,19 @@ impl Index<usize> for Matrix {
 impl IndexMut<usize> for Matrix {
     fn index_mut(&mut self, index: usize) -> &mut Self::Output {
         &mut self.data[index * self.cols..(index + 1) * self.cols]
+    }
+}
+
+impl Index<usize> for Vector {
+    type Output = f64;
+
+    fn index(&self, index: usize) -> &Self::Output {
+        &self.data[index]
+    }
+}
+
+impl IndexMut<usize> for Vector {
+    fn index_mut(&mut self, index: usize) -> &mut Self::Output {
+        &mut self.data[index]
     }
 }

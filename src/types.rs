@@ -1,4 +1,4 @@
-use super::matrix::Matrix;
+use super::linalg::{Matrix, Vector};
 use crate::parser::{AstNode, DyadicVerb, MonadicVerb};
 use std::fmt::Display;
 
@@ -7,7 +7,7 @@ pub enum LalaType {
     Integer(i32),
     Double(f64),
     Matrix(Matrix),
-    Vector(Matrix),
+    Vector(Vector),
 }
 
 impl Display for LalaType {
@@ -29,11 +29,12 @@ impl Display for LalaType {
                 }
             }
             LalaType::Vector(v) => {
-                for c in 0..v.cols {
-                    if c == v.cols - 1 {
-                        write!(f, "{:.2}", v[0][c])?;
+                write!(f, "[")?;
+                for c in 0..v.len {
+                    if c == v.len - 1 {
+                        write!(f, "{:.2}", v[c])?;
                     } else {
-                        write!(f, "{:.2} ", v[0][c])?;
+                        write!(f, "{:.2} ", v[c])?;
                     }
                 }
                 writeln!(f, "]")?;
@@ -87,19 +88,18 @@ pub fn construct_matrix(v: &Vec<Vec<AstNode>>) -> Matrix {
     }
 }
 
-pub fn construct_vector(v: &Vec<AstNode>) -> Matrix {
-    let cols = v.len();
-    let mut vec: Vec<f64> = vec![0f64; cols];
-    for col in 0..cols {
+pub fn construct_vector(v: &Vec<AstNode>) -> Vector {
+    let len = v.len();
+    let mut vec: Vec<f64> = vec![0f64; len];
+    for col in 0..len {
         match &v[col] {
             AstNode::Integer(i) => vec[col] = *i as f64,
             AstNode::DoublePrecisionFloat(d) => vec[col] = *d,
             err => panic!("{:?} not allowed in vector definition", err),
         }
     }
-    Matrix {
-        rows: 1,
-        cols,
+    Vector {
+        len,
         data: vec,
     }
 }

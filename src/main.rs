@@ -4,7 +4,7 @@ use anyhow::anyhow;
 
 mod commands;
 mod interp;
-mod matrix;
+mod linalg;
 mod parser;
 mod repl;
 mod types;
