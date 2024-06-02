@@ -1,54 +1,11 @@
 use std::ops::{Index, IndexMut};
+use anyhow::{anyhow, Error};
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct Matrix {
     pub rows: usize,
     pub cols: usize,
     pub data: Vec<f64>,
-}
-
-#[derive(Debug, PartialEq, Clone)]
-pub struct Vector {
-    pub len: usize,
-    pub data: Vec<f64>,
-}
-
-impl Vector {
-    pub fn new(len: usize) -> Self {
-        Self {
-            len,
-            data: vec![0.0; len],
-        }
-    }
-    #[allow(dead_code)]
-    pub fn apply(&self, f: impl Fn(f64) -> f64) -> Vec<f64> {
-        self.data.iter().map(|elem| f(*elem)).collect()
-    }
-    #[allow(dead_code)]
-    pub fn combine(&self, b: Self, f: impl Fn(f64, f64) -> f64) -> Self {
-        if self.len != b.len {
-            panic!("Vectors must be of the same size.");
-        }
-        let mut new_matrix = Self::new(self.len);
-        new_matrix.data = self
-            .data
-            .iter()
-            .zip(b.data.iter())
-            .map(|(a, b)| f(*a, *b))
-            .collect();
-        new_matrix
-    }
-    #[allow(dead_code)]
-    pub fn dot(&self, b: Self) -> f64 {
-        if self.len != b.len {
-            panic!("Vectors must be of the same size");
-        }
-        self.data
-            .iter()
-            .zip(b.data.iter())
-            .map(|(x, y)| x + y)
-            .sum()
-    }
 }
 
 impl Matrix {
@@ -60,12 +17,12 @@ impl Matrix {
         }
     }
 
-    pub fn dot(&self, b: Self) -> Self {
-        if self.rows != b.cols || self.cols != b.rows {
-            panic!(
+    pub fn dot(&self, b: Self) -> Result<Self, Error> {
+        if self.cols != b.rows {
+            return Err(anyhow!(
                 "Dimensions not matched. M1 is {} by {}, M2 is {} by {}.",
                 self.rows, self.cols, b.rows, b.cols
-            );
+            ));
         }
         let mut dp = Self::new(self.rows, b.cols);
         for i in 0..self.rows {
@@ -77,7 +34,7 @@ impl Matrix {
                 dp[i][j] = sum;
             }
         }
-        dp
+        Ok(dp)
     }
 
     pub fn rank(&self) -> i32 {
@@ -126,7 +83,7 @@ impl Matrix {
         reduced
     }
 
-    pub fn cofactor(&self, expanded_row: usize, j: usize) -> f64 {
+    pub fn cofactor(&self, expanded_row: usize, j: usize) -> Result<f64, Error> {
         let mut cut: Vec<Vec<f64>> = Vec::new();
         for r in 0..self.rows {
             if r == expanded_row {
@@ -144,33 +101,30 @@ impl Matrix {
         let flattened = cut.clone().into_iter().flatten().collect();
         let n_r = cut.len();
         let n_c = cut[0].len();
-        let minor = Self {
+        let minor = (Self {
             rows: n_r,
             cols: n_c,
             data: flattened,
         }
-        .det();
+        .det())?;
         let base: i32 = -1;
-        minor * f64::from(base.pow((expanded_row + j) as u32))
+        Ok(minor * f64::from(base.pow((expanded_row + j) as u32)))
     }
 
-    pub fn det(&self) -> f64 {
+    pub fn det(&self) -> Result<f64, Error> {
         if self.rows != self.cols {
-            panic!(
-                "Determinant requires matrix to be a square. Input matrix was {:?}.",
-                self
-            );
+            return Err(anyhow!("Determinant requires matrix to be a square"));
         }
         if self.rows == 2 && self.cols == 2 {
-            self[0][0] * self[1][1] - self[0][1] * self[1][0]
+            Ok(self[0][0] * self[1][1] - self[0][1] * self[1][0])
         } else {
             let row: usize = 1;
             let mut det = 0.0;
 
             for j in 0..self[row].len() {
-                det += self.cofactor(row, j) * self[row][j];
+                det += self.cofactor(row, j)? * self[row][j];
             }
-            det
+            Ok(det)
         }
     }
 
@@ -184,58 +138,58 @@ impl Matrix {
         t
     }
 
-    #[allow(dead_code)]
-    pub fn trace(&self) -> f64 {
-        if self.rows != self.cols {
-            panic!(
-                "Trace requires matrix to be square. Input matrix was {:?}.",
-                self
-            );
-        }
-        let mut t: f64 = 0.0;
-        for i in 0..self.rows {
-            t += self[i][i];
-        }
-        t
-    }
+    // #[allow(dead_code)]
+    // pub fn trace(&self) -> f64 {
+    //     if self.rows != self.cols {
+    //         panic!(
+    //             "Trace requires matrix to be square. Input matrix was {:?}.",
+    //             self
+    //         );
+    //     }
+    //     let mut t: f64 = 0.0;
+    //     for i in 0..self.rows {
+    //         t += self[i][i];
+    //     }
+    //     t
+    // }
 
-    pub fn inverse(&self) -> Self {
-        let d = self.det();
+    pub fn inverse(&self) -> Result<Self, Error> {
+        let d = self.det()?;
         if d == 0.0 {
-            panic!("Determinant is 0. No inverse.");
+            return Err(anyhow!("Determinant is zero! No inverse."));
         }
 
         let mut inv = Self::new(self.rows, self.cols);
 
         for row in 0..self.rows {
             for col in 0..self.cols {
-                inv[row][col] = self.cofactor(row, col);
+                inv[row][col] = self.cofactor(row, col)?;
             }
         }
 
         inv.correct();
         inv = inv.transpose();
         inv.apply(|x| x / d);
-        inv
+        Ok(inv)
     }
 
-    #[allow(dead_code)]
-    pub fn identity(&mut self) {
-        if self.rows != self.cols {
-            panic!("Not a square matrix.");
-        }
-        for r in 0..self.rows {
-            self[r][r] = 1.0;
-        }
+    // #[allow(dead_code)]
+    // pub fn identity(&mut self) {
+    //     if self.rows != self.cols {
+    //         panic!("Not a square matrix.");
+    //     }
+    //     for r in 0..self.rows {
+    //         self[r][r] = 1.0;
+    //     }
+    // }
+
+    pub fn apply(&mut self, f: impl Fn(f64) -> f64) {
+        self.data = self.data.iter().map(|elem| f(*elem)).collect()
     }
 
-    pub fn apply(&self, f: impl Fn(f64) -> f64) -> Vec<f64> {
-        self.data.iter().map(|elem| f(*elem)).collect()
-    }
-
-    pub fn combine(&self, b: Self, f: impl Fn(f64, f64) -> f64) -> Self {
+    pub fn combine(&self, b: Self, f: impl Fn(f64, f64) -> f64) -> Result<Self, Error> {
         if self.rows != b.rows || self.cols != b.cols {
-            panic!("Matrices must be of the same size.");
+            return Err(anyhow!("Matrices must be of the same size."));
         }
         let mut new_matrix = Self::new(self.rows, self.cols);
         new_matrix.data = self
@@ -244,7 +198,7 @@ impl Matrix {
             .zip(b.data.iter())
             .map(|(a, b)| f(*a, *b))
             .collect();
-        new_matrix
+        Ok(new_matrix)
     }
 
     fn swap_rows(&mut self, row: usize) {
@@ -295,19 +249,5 @@ impl Index<usize> for Matrix {
 impl IndexMut<usize> for Matrix {
     fn index_mut(&mut self, index: usize) -> &mut Self::Output {
         &mut self.data[index * self.cols..(index + 1) * self.cols]
-    }
-}
-
-impl Index<usize> for Vector {
-    type Output = f64;
-
-    fn index(&self, index: usize) -> &Self::Output {
-        &self.data[index]
-    }
-}
-
-impl IndexMut<usize> for Vector {
-    fn index_mut(&mut self, index: usize) -> &mut Self::Output {
-        &mut self.data[index]
     }
 }

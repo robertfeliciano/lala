@@ -2,7 +2,6 @@ use std::path::Path;
 
 use anyhow::anyhow;
 
-mod commands;
 mod interp;
 mod linalg;
 mod parser;
@@ -40,9 +39,11 @@ fn main() -> Result<(), anyhow::Error> {
         let raw_file = std::fs::read_to_string(path)?;
 
         let ast_root = parser::parse(&raw_file)?;
-        interp::interp(&ast_root, None, false)?;
+        let res = interp::interp(&ast_root, None, false)?;
+        println!("{}", res);
         Ok(())
     } else {
-        repl::repl()
+        // repl::repl()
+        Ok(())
     }
 }

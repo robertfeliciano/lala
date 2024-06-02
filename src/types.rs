@@ -1,16 +1,17 @@
-use super::linalg::{Matrix, Vector};
-use crate::parser::{AstNode, DyadicVerb, MonadicVerb};
+use super::linalg::Matrix;
+use super::parser::{AstNode, DyadicVerb, MonadicVerb};
+use anyhow::{anyhow, Error};
 use std::fmt::Display;
 
 #[derive(Clone, Debug)]
-pub enum LalaType {
+pub enum LalaType<'a> {
     Integer(i32),
     Double(f64),
     Matrix(Matrix),
-    Vector(Vector),
+    Fun((String, Vec<AstNode<'a>>, Vec<AstNode<'a>>)),
 }
 
-impl Display for LalaType {
+impl Display for LalaType<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             LalaType::Integer(i) => write!(f, "{}", i.to_string())?,
@@ -28,16 +29,22 @@ impl Display for LalaType {
                     writeln!(f, "]")?;
                 }
             }
-            LalaType::Vector(v) => {
-                write!(f, "[")?;
-                for c in 0..v.len {
-                    if c == v.len - 1 {
-                        write!(f, "{:.2}", v[c])?;
-                    } else {
-                        write!(f, "{:.2} ", v[c])?;
-                    }
-                }
-                writeln!(f, "]")?;
+            LalaType::Fun((name, param_list, _body)) => {
+                writeln!(f, "FUN {name}")?;
+                writeln!(
+                    f,
+                    "params: [{:?}]",
+                    param_list
+                        .iter()
+                        .map(|node| {
+                            if let AstNode::Ident(id) = node {
+                                format!("{id} ")
+                            } else {
+                                "_".to_string() // Placeholder for other AstNode variants
+                            }
+                        })
+                        .collect::<Vec<String>>()
+                )?;
             }
         };
         Ok(())
@@ -67,7 +74,7 @@ impl ToString for DyadicVerb {
 }
 
 // later, return result<matrix, error>
-pub fn construct_matrix(v: &Vec<Vec<AstNode>>) -> Matrix {
+pub fn construct_matrix(v: &Vec<Vec<AstNode>>) -> Result<Matrix, Error> {
     let rows = v.len();
     let cols = v[0].len();
     let mut mat: Vec<f64> = vec![0.0; rows * cols];
@@ -77,29 +84,13 @@ pub fn construct_matrix(v: &Vec<Vec<AstNode>>) -> Matrix {
             match &v[row][col] {
                 AstNode::Integer(i) => mat[row * cols + col] = *i as f64,
                 AstNode::DoublePrecisionFloat(d) => mat[row * cols + col] = *d,
-                err => panic!("{:?} not allowed in matrix definition", err),
+                err => return Err(anyhow!("{:?} not allowed in matrix definition", err)),
             }
         }
     }
-    Matrix {
+    Ok(Matrix {
         rows,
         cols,
         data: mat,
-    }
-}
-
-pub fn construct_vector(v: &Vec<AstNode>) -> Vector {
-    let len = v.len();
-    let mut vec: Vec<f64> = vec![0f64; len];
-    for col in 0..len {
-        match &v[col] {
-            AstNode::Integer(i) => vec[col] = *i as f64,
-            AstNode::DoublePrecisionFloat(d) => vec[col] = *d,
-            err => panic!("{:?} not allowed in vector definition", err),
-        }
-    }
-    Vector {
-        len,
-        data: vec,
-    }
+    })
 }
