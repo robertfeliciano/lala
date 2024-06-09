@@ -1,5 +1,5 @@
-use std::ops::{Index, IndexMut};
 use anyhow::{anyhow, Error};
+use std::ops::{Index, IndexMut};
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct Matrix {
@@ -21,7 +21,10 @@ impl Matrix {
         if self.cols != b.rows {
             return Err(anyhow!(
                 "Dimensions not matched. M1 is {} by {}, M2 is {} by {}.",
-                self.rows, self.cols, b.rows, b.cols
+                self.rows,
+                self.cols,
+                b.rows,
+                b.cols
             ));
         }
         let mut dp = Self::new(self.rows, b.cols);

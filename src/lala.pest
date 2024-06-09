@@ -17,7 +17,7 @@ ARROW = _{"=>"}
 SEMI = _{";"}
 
 params = {ident*}
-body = {(stmt ~ NEWLINE*)+ }
+body = {(stmt ~ NEWLINE+)+}
 fun_decl = {
   FUN ~ ident ~ EQUAL ~ LPAREN ~ params ~ RPAREN ~ ARROW ~
   LBRACE ~ NEWLINE* ~ body ~ RBRACE
@@ -33,14 +33,15 @@ expr = {
   | terms
 }
 
+
 app_param = _{
-	ident
-	| matrix
-    | monadic
-    | dyadic
-    | app
+  ident
+  | matrix
+  | monadic 
+  | dyadic 
+  | app
 }
-app = { ident ~ LPAREN ~ app_param* ~ RPAREN }
+app = { ident ~ LPAREN ~ app_param* ~ RPAREN}
 
 monadic = { verb ~ expr }
 

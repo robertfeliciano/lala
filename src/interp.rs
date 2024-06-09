@@ -51,20 +51,16 @@ where
         }
     };
     Ok(match verb {
-        MonadicVerb::Inverse => {
-            match matrix.inverse() {
-                Ok(result) => LalaType::Matrix(result),
-                Err(e) => return Err(e),
-            }
+        MonadicVerb::Inverse => match matrix.inverse() {
+            Ok(result) => LalaType::Matrix(result),
+            Err(e) => return Err(e),
         },
         MonadicVerb::Rank => LalaType::Integer(matrix.rank()),
         MonadicVerb::RREF => LalaType::Matrix(matrix.rref()),
         MonadicVerb::Transpose => LalaType::Matrix(matrix.transpose()),
-        MonadicVerb::Determinant => {
-            match matrix.det() {
-                Ok(result) => LalaType::Double(result),
-                Err(e) => return Err(e),
-            }
+        MonadicVerb::Determinant => match matrix.det() {
+            Ok(result) => LalaType::Double(result),
+            Err(e) => return Err(e),
         },
     })
 }
@@ -91,23 +87,17 @@ where
         return Err(anyhow!("can only call {func} on a matrix"));
     };
     Ok(match verb {
-        DyadicVerb::Dot => {
-            match leftside.dot(rightside.clone()) {
-                Ok(m) => LalaType::Matrix(m),
-                Err(e) => return Err(e),
-            }
+        DyadicVerb::Dot => match leftside.dot(rightside.clone()) {
+            Ok(m) => LalaType::Matrix(m),
+            Err(e) => return Err(e),
         },
-        DyadicVerb::Plus => {
-            match leftside.combine(rightside, |a, b| a + b) {
-                Ok(result) => LalaType::Matrix(result),
-                Err(e) => return Err(e),
-            }
+        DyadicVerb::Plus => match leftside.combine(rightside, |a, b| a + b) {
+            Ok(result) => LalaType::Matrix(result),
+            Err(e) => return Err(e),
         },
-        DyadicVerb::Times => {
-            match leftside.combine(rightside, |a, b| a * b) {
-                Ok(result) => LalaType::Matrix(result),
-                Err(e) => return Err(e),
-            }
+        DyadicVerb::Times => match leftside.combine(rightside, |a, b| a * b) {
+            Ok(result) => LalaType::Matrix(result),
+            Err(e) => return Err(e),
         },
     })
 }
@@ -133,7 +123,7 @@ where
         AstNode::Ident(rhs_ident) => {
             let val = match env.get(rhs_ident) {
                 Some(v) => v,
-                None => return Err(anyhow!("{rhs_ident} referenced before definition."))
+                None => return Err(anyhow!("{rhs_ident} referenced before definition.")),
             };
             match env.insert(ident.to_string(), val.clone()) {
                 _ => Ok(()),
@@ -156,7 +146,7 @@ where
             match env.insert(ident.to_string(), result) {
                 _ => Ok(()),
             }
-        }
+        }        
         AstNode::App((name, params)) => {
             let result = match interp_app(name, params, env) {
                 Ok(val) => val,
@@ -288,8 +278,7 @@ where
         }
     }
 
-    let another_body = body_o.to_owned();
-    let last_expr = match another_body.last() {
+    let last_expr = match body.last() {
         Some(res) => res.to_owned(),
         None => {
             return Err(anyhow!("empty function body somehow!"));
@@ -345,7 +334,7 @@ pub fn interp<'a>(
             AstNode::Ident(var) => {
                 let value = match env.get(var) {
                     Some(v) => v,
-                    None => return Err(anyhow!("{var} referenced before definition."))
+                    None => return Err(anyhow!("{var} referenced before definition.")),
                 };
                 result = format!("{}", value);
             }

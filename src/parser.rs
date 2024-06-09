@@ -1,8 +1,8 @@
 use self::AstNode::*;
+use anyhow::anyhow;
 use pest::iterators::{Pair, Pairs};
 use pest::Parser;
 use pest_derive::Parser;
-use anyhow::anyhow;
 
 #[derive(Parser)]
 #[grammar = "lala.pest"]
@@ -59,7 +59,7 @@ fn build_ast_from_term(pair: Pair<Rule>) -> Option<AstNode> {
             };
             let int: i32 = istr.parse().unwrap();
             Some(AstNode::Integer(sign * int))
-        },
+        }
         Rule::decimal => {
             let dstr = pair.as_str();
             let (sign, dstr) = match &dstr[..1] {
@@ -71,7 +71,7 @@ fn build_ast_from_term(pair: Pair<Rule>) -> Option<AstNode> {
                 float *= sign;
             }
             Some(AstNode::DoublePrecisionFloat(float))
-        },
+        }
         Rule::expr => build_ast_from_expr(pair),
         _bad_term => None,
     }
@@ -102,13 +102,13 @@ fn parse_dyadic_verb<'a>(
         "@" => DyadicVerb::Dot,
         "++" => DyadicVerb::Plus,
         "**" => DyadicVerb::Times,
-        _ => return None
+        _ => return None,
     };
-    
+
     Some(AstNode::DyadicOp {
         lhs: Box::new(lhs),
         rhs: Box::new(rhs),
-        verb
+        verb,
     })
 }
 
@@ -165,7 +165,7 @@ fn build_ast_from_expr(pair: Pair<Rule>) -> Option<AstNode> {
             for ut in unparsed_terms {
                 let term = match build_ast_from_term(ut) {
                     Some(t) => t,
-                    None => return None
+                    None => return None,
                 };
                 terms.push(term);
             }
@@ -181,7 +181,7 @@ fn build_ast_from_expr(pair: Pair<Rule>) -> Option<AstNode> {
                 for ut in row.into_inner() {
                     let term = match build_ast_from_term(ut) {
                         Some(t) => t,
-                        None => return None
+                        None => return None,
                     };
                     terms.push(term);
                 }
@@ -216,13 +216,10 @@ fn build_ast_from_expr(pair: Pair<Rule>) -> Option<AstNode> {
         Rule::app => {
             let mut pair = pair.into_inner();
             let ident = pair.next()?;
-            let mut parsed_params = Vec::new();
-            while let Some(param) = pair.next() {
-                parsed_params.push(build_ast_from_expr(param)?);
-            }
+            let parsed_params = pair.map(build_ast_from_expr).collect::<Option<Vec<_>>>()?;
             Some(App((ident.as_span().as_str().to_string(), parsed_params)))
         }
-        _bad_expr => None
+        _bad_expr => None,
     }
 }
 
@@ -235,7 +232,7 @@ pub fn parse(source: &str) -> Result<Vec<Box<AstNode>>, anyhow::Error> {
             Rule::fun_decl | Rule::expr => {
                 let node = match build_ast_from_expr(pair) {
                     Some(n) => n,
-                    None => return Err(anyhow!("Parse error! Please consult the guide :)"))
+                    None => return Err(anyhow!("Parse error! Please consult the guide :)")),
                 };
                 ast.push(Box::new(node));
             }
